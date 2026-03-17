@@ -3,7 +3,6 @@
 A real-time network traffic monitoring and analysis tool with machine learning-based anomaly detection.
 
 ![Python](https://img.shields.io/badge/python-3.8+-blue.svg)
-![License](https://img.shields.io/badge/license-MIT-green.svg)
 
 ## Features
 
