@@ -6,9 +6,9 @@ import pandas as pd
 import threading
 import time
 from datetime import datetime, timedelta
-from packet_capture import PacketCapture
-from data_processor import DataProcessor
-from anomaly_detector import AnomalyDetector
+from src.packet_capture import PacketCapture
+from src.data_processor import DataProcessor
+from src.anomaly_detector import AnomalyDetector
 import logging
 
 logging.basicConfig(level=logging.INFO)
@@ -36,92 +36,288 @@ class NetworkDashboard:
         self.setup_callbacks()
     
     def setup_layout(self):
-        """Setup dashboard layout"""
+        """Setup enhanced dashboard layout"""
         self.app.layout = html.Div([
-            html.H1("Network Traffic Analyzer & Anomaly Detector", 
-                    style={'textAlign': 'center', 'color': '#2c3e50', 'marginBottom': 30}),
+            # Header
+            html.Div([
+                html.H1([
+                    html.Span("🛡️ ", style={'marginRight': '10px'}),
+                    "Network Traffic Analyzer"
+                ], style={
+                    'margin': 0,
+                    'fontSize': '32px',
+                    'fontWeight': '700',
+                    'color': '#1a202c'
+                }),
+                html.P("Real-time traffic monitoring with ML-based anomaly detection", 
+                       style={'margin': '5px 0 0 0', 'color': '#718096', 'fontSize': '14px'})
+            ], style={
+                'padding': '30px 40px',
+                'background': 'white',
+                'borderBottom': '1px solid #e2e8f0',
+                'marginBottom': '30px',
+                'textAlign': 'center'
+            }),
             
             # Control Panel
             html.Div([
                 html.Div([
-                    html.Label("Network Interface:"),
+                    html.Label("Network Interface:", style={
+                        'fontSize': '14px',
+                        'fontWeight': '600',
+                        'color': '#4a5568',
+                        'marginRight': '10px'
+                    }),
                     dcc.Input(id='interface-input', type='text', value=self.interface, 
-                             style={'marginLeft': 10, 'marginRight': 20}),
-                    html.Button('Start Capture', id='start-btn', n_clicks=0, 
-                               style={'marginRight': 10, 'backgroundColor': '#27ae60', 'color': 'white'}),
-                    html.Button('Stop Capture', id='stop-btn', n_clicks=0,
-                               style={'marginRight': 10, 'backgroundColor': '#e74c3c', 'color': 'white'}),
-                    html.Button('Train Model', id='train-btn', n_clicks=0,
-                               style={'backgroundColor': '#3498db', 'color': 'white'}),
-                ], style={'padding': 20, 'backgroundColor': '#ecf0f1', 'borderRadius': 5}),
+                             style={
+                                 'padding': '8px 12px',
+                                 'border': '1px solid #cbd5e0',
+                                 'borderRadius': '6px',
+                                 'fontSize': '14px',
+                                 'marginRight': '20px'
+                             }),
+                    html.Button('▶ Start Capture', id='start-btn', n_clicks=0, 
+                               style={
+                                   'padding': '8px 20px',
+                                   'marginRight': '10px',
+                                   'backgroundColor': '#48bb78',
+                                   'color': 'white',
+                                   'border': 'none',
+                                   'borderRadius': '6px',
+                                   'fontSize': '14px',
+                                   'fontWeight': '600',
+                                   'cursor': 'pointer'
+                               }),
+                    html.Button('■ Stop Capture', id='stop-btn', n_clicks=0,
+                               style={
+                                   'padding': '8px 20px',
+                                   'marginRight': '10px',
+                                   'backgroundColor': '#f56565',
+                                   'color': 'white',
+                                   'border': 'none',
+                                   'borderRadius': '6px',
+                                   'fontSize': '14px',
+                                   'fontWeight': '600',
+                                   'cursor': 'pointer'
+                               }),
+                    html.Button('🤖 Train Model', id='train-btn', n_clicks=0,
+                               style={
+                                   'padding': '8px 20px',
+                                   'backgroundColor': '#4299e1',
+                                   'color': 'white',
+                                   'border': 'none',
+                                   'borderRadius': '6px',
+                                   'fontSize': '14px',
+                                   'fontWeight': '600',
+                                   'cursor': 'pointer'
+                               }),
+                ], style={'padding': 20, 'backgroundColor': 'white', 'borderRadius': '8px', 'boxShadow': '0 1px 3px rgba(0,0,0,0.1)'}),
                 
-                html.Div(id='status-output', style={'marginTop': 10, 'padding': 10})
-            ]),
+                html.Div(id='status-output', style={'marginTop': 15, 'padding': '12px', 'borderRadius': '6px'})
+            ], style={'margin': '0 40px 30px 40px'}),
             
             # Statistics Cards
             html.Div([
+                # Total Packets Card
                 html.Div([
-                    html.H3(id='total-packets', children='0', style={'margin': 0}),
-                    html.P('Total Packets', style={'margin': 0, 'color': '#7f8c8d'})
-                ], className='stat-card', style={'flex': 1, 'padding': 20, 'backgroundColor': '#3498db', 
-                                                 'color': 'white', 'borderRadius': 5, 'margin': 10}),
+                    html.Div("📊", style={'fontSize': '32px', 'marginBottom': '10px'}),
+                    html.H2(id='total-packets', children='0', style={
+                        'margin': '0 0 4px 0',
+                        'fontSize': '40px',
+                        'fontWeight': '700',
+                        'color': '#ffffff'
+                    }),
+                    html.P('Total Packets', style={
+                        'margin': 0,
+                        'color': '#e6e6e6',
+                        'fontSize': '13px',
+                        'fontWeight': '500',
+                        'textTransform': 'uppercase',
+                        'letterSpacing': '0.5px'
+                    })
+                ], style={
+                    'flex': '1',
+                    'padding': '30px',
+                    'background': 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    'color': 'white',
+                    'borderRadius': '12px',
+                    'margin': '0 12px',
+                    'boxShadow': '0 4px 6px rgba(0,0,0,0.15)',
+                    'minWidth': '200px',
+                    'textAlign': 'center'
+                }),
                 
+                # Anomalies Card
                 html.Div([
-                    html.H3(id='anomaly-count', children='0', style={'margin': 0}),
-                    html.P('Anomalies Detected', style={'margin': 0, 'color': '#7f8c8d'})
-                ], className='stat-card', style={'flex': 1, 'padding': 20, 'backgroundColor': '#e74c3c', 
-                                                 'color': 'white', 'borderRadius': 5, 'margin': 10}),
+                    html.Div("⚠️", style={'fontSize': '32px', 'marginBottom': '10px'}),
+                    html.H2(id='anomaly-count', children='0', style={
+                        'margin': '0 0 4px 0',
+                        'fontSize': '40px',
+                        'fontWeight': '700',
+                        'color': '#ffffff'
+                    }),
+                    html.P('Anomalies Detected', style={
+                        'margin': 0,
+                        'color': '#e6e6e6',
+                        'fontSize': '13px',
+                        'fontWeight': '500',
+                        'textTransform': 'uppercase',
+                        'letterSpacing': '0.5px'
+                    })
+                ], style={
+                    'flex': '1',
+                    'padding': '30px',
+                    'background': 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                    'color': 'white',
+                    'borderRadius': '12px',
+                    'margin': '0 12px',
+                    'boxShadow': '0 4px 6px rgba(0,0,0,0.15)',
+                    'minWidth': '200px',
+                    'textAlign': 'center'
+                }),
                 
+                # Unique IPs Card
                 html.Div([
-                    html.H3(id='unique-ips', children='0', style={'margin': 0}),
-                    html.P('Unique IPs', style={'margin': 0, 'color': '#7f8c8d'})
-                ], className='stat-card', style={'flex': 1, 'padding': 20, 'backgroundColor': '#27ae60', 
-                                                 'color': 'white', 'borderRadius': 5, 'margin': 10}),
+                    html.Div("🌐", style={'fontSize': '32px', 'marginBottom': '10px'}),
+                    html.H2(id='unique-ips', children='0', style={
+                        'margin': '0 0 4px 0',
+                        'fontSize': '40px',
+                        'fontWeight': '700',
+                        'color': '#ffffff'
+                    }),
+                    html.P('Unique IP Addresses', style={
+                        'margin': 0,
+                        'color': '#e6e6e6',
+                        'fontSize': '13px',
+                        'fontWeight': '500',
+                        'textTransform': 'uppercase',
+                        'letterSpacing': '0.5px'
+                    })
+                ], style={
+                    'flex': '1',
+                    'padding': '30px',
+                    'background': 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+                    'color': 'white',
+                    'borderRadius': '12px',
+                    'margin': '0 12px',
+                    'boxShadow': '0 4px 6px rgba(0,0,0,0.15)',
+                    'minWidth': '200px',
+                    'textAlign': 'center'
+                }),
                 
+                # Traffic Rate Card
                 html.Div([
-                    html.H3(id='traffic-rate', children='0 KB/s', style={'margin': 0}),
-                    html.P('Traffic Rate', style={'margin': 0, 'color': '#7f8c8d'})
-                ], className='stat-card', style={'flex': 1, 'padding': 20, 'backgroundColor': '#f39c12', 
-                                                 'color': 'white', 'borderRadius': 5, 'margin': 10}),
-            ], style={'display': 'flex', 'flexWrap': 'wrap'}),
+                    html.Div("⚡", style={'fontSize': '32px', 'marginBottom': '10px'}),
+                    html.H2(id='traffic-rate', children='0 KB/s', style={
+                        'margin': '0 0 4px 0',
+                        'fontSize': '40px',
+                        'fontWeight': '700',
+                        'color': '#ffffff'
+                    }),
+                    html.P('Traffic Rate', style={
+                        'margin': 0,
+                        'color': '#e6e6e6',
+                        'fontSize': '13px',
+                        'fontWeight': '500',
+                        'textTransform': 'uppercase',
+                        'letterSpacing': '0.5px'
+                    })
+                ], style={
+                    'flex': '1',
+                    'padding': '30px',
+                    'background': 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
+                    'color': 'white',
+                    'borderRadius': '12px',
+                    'margin': '0 12px',
+                    'boxShadow': '0 4px 6px rgba(0,0,0,0.15)',
+                    'minWidth': '200px',
+                    'textAlign': 'center'
+                }),
+            ], style={'display': 'flex', 'flexWrap': 'wrap', 'margin': '0 28px 30px 28px'}),
             
-            # Graphs
+            # Graphs Row 1
             html.Div([
                 html.Div([
-                    dcc.Graph(id='protocol-pie-chart')
-                ], style={'width': '50%', 'display': 'inline-block'}),
+                    dcc.Graph(id='protocol-pie-chart', config={'displayModeBar': False})
+                ], style={
+                    'flex': '1',
+                    'background': 'white',
+                    'borderRadius': '12px',
+                    'padding': '20px',
+                    'margin': '0 12px',
+                    'boxShadow': '0 1px 3px rgba(0,0,0,0.1)'
+                }),
                 
                 html.Div([
-                    dcc.Graph(id='traffic-timeline')
-                ], style={'width': '50%', 'display': 'inline-block'}),
-            ]),
+                    dcc.Graph(id='traffic-timeline', config={'displayModeBar': False})
+                ], style={
+                    'flex': '1',
+                    'background': 'white',
+                    'borderRadius': '12px',
+                    'padding': '20px',
+                    'margin': '0 12px',
+                    'boxShadow': '0 1px 3px rgba(0,0,0,0.1)'
+                }),
+            ], style={'display': 'flex', 'margin': '0 28px 25px 28px'}),
             
+            # Graphs Row 2
             html.Div([
                 html.Div([
-                    dcc.Graph(id='top-talkers')
-                ], style={'width': '50%', 'display': 'inline-block'}),
+                    dcc.Graph(id='top-talkers', config={'displayModeBar': False})
+                ], style={
+                    'flex': '1',
+                    'background': 'white',
+                    'borderRadius': '12px',
+                    'padding': '20px',
+                    'margin': '0 12px',
+                    'boxShadow': '0 1px 3px rgba(0,0,0,0.1)'
+                }),
                 
                 html.Div([
-                    dcc.Graph(id='anomaly-scatter')
-                ], style={'width': '50%', 'display': 'inline-block'}),
-            ]),
+                    dcc.Graph(id='anomaly-scatter', config={'displayModeBar': False})
+                ], style={
+                    'flex': '1',
+                    'background': 'white',
+                    'borderRadius': '12px',
+                    'padding': '20px',
+                    'margin': '0 12px',
+                    'boxShadow': '0 1px 3px rgba(0,0,0,0.1)'
+                }),
+            ], style={'display': 'flex', 'margin': '0 28px 25px 28px'}),
             
             # Anomaly Table
             html.Div([
-                html.H3("Recent Anomalies", style={'color': '#2c3e50'}),
+                html.H3("🔍 Recent Anomalies", style={
+                    'margin': '0 0 20px 0',
+                    'fontSize': '20px',
+                    'fontWeight': '600',
+                    'color': '#1a202c'
+                }),
                 html.Div(id='anomaly-table', style={'overflowX': 'auto'})
-            ], style={'marginTop': 30, 'padding': 20, 'backgroundColor': '#ecf0f1', 'borderRadius': 5}),
+            ], style={
+                'margin': '0 40px 40px 40px',
+                'padding': '30px',
+                'background': 'white',
+                'borderRadius': '12px',
+                'boxShadow': '0 1px 3px rgba(0,0,0,0.1)'
+            }),
             
             # Auto-refresh interval
             dcc.Interval(
                 id='interval-component',
-                interval=2*1000,  # Update every 2 seconds
+                interval=2*1000,
                 n_intervals=0
             ),
             
             # Store data
             dcc.Store(id='packet-data-store', data=[])
-        ])
+        ], style={
+            'fontFamily': "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            'background': '#f7fafc',
+            'minHeight': '100vh',
+            'padding': '0',
+            'margin': '0'
+        })
     
     def setup_callbacks(self):
         """Setup dashboard callbacks"""
@@ -139,7 +335,7 @@ class NetworkDashboard:
             ctx = dash.callback_context
             
             if not ctx.triggered:
-                return "Ready", []
+                return "", []
             
             button_id = ctx.triggered[0]['prop_id'].split('.')[0]
             
@@ -147,22 +343,64 @@ class NetworkDashboard:
                 if not self.is_capturing:
                     self.interface = interface
                     self.start_capture_thread()
-                    return html.Div("✓ Capture started", style={'color': '#27ae60', 'fontWeight': 'bold'}), []
-                return html.Div("⚠ Already capturing", style={'color': '#f39c12'}), []
+                    return html.Div("✓ Capture started successfully", style={
+                        'color': '#22543d',
+                        'backgroundColor': '#c6f6d5',
+                        'padding': '10px 15px',
+                        'borderRadius': '6px',
+                        'border': '1px solid #9ae6b4',
+                        'fontWeight': '600'
+                    }), []
+                return html.Div("⚠ Already capturing", style={
+                    'color': '#7c2d12',
+                    'backgroundColor': '#feebc8',
+                    'padding': '10px 15px',
+                    'borderRadius': '6px',
+                    'border': '1px solid #fbd38d',
+                    'fontWeight': '600'
+                }), []
             
             elif button_id == 'stop-btn':
                 if self.is_capturing:
                     self.stop_capture_thread()
-                    return html.Div("✓ Capture stopped", style={'color': '#e74c3c', 'fontWeight': 'bold'}), []
-                return html.Div("⚠ Not capturing", style={'color': '#f39c12'}), []
+                    return html.Div("✓ Capture stopped", style={
+                        'color': '#742a2a',
+                        'backgroundColor': '#fed7d7',
+                        'padding': '10px 15px',
+                        'borderRadius': '6px',
+                        'border': '1px solid #fc8181',
+                        'fontWeight': '600'
+                    }), []
+                return html.Div("⚠ Not currently capturing", style={
+                    'color': '#7c2d12',
+                    'backgroundColor': '#feebc8',
+                    'padding': '10px 15px',
+                    'borderRadius': '6px',
+                    'border': '1px solid #fbd38d',
+                    'fontWeight': '600'
+                }), []
             
             elif button_id == 'train-btn':
                 if len(self.packet_buffer) > 100:
                     self.train_model()
-                    return html.Div("✓ Model trained successfully", style={'color': '#3498db', 'fontWeight': 'bold'}), []
-                return html.Div("⚠ Need at least 100 packets to train", style={'color': '#f39c12'}), []
+                    return html.Div("✓ Model trained successfully!", style={
+                        'color': '#2c5282',
+                        'backgroundColor': '#bee3f8',
+                        'padding': '10px 15px',
+                        'borderRadius': '6px',
+                        'border': '1px solid #90cdf4',
+                        'fontWeight': '600'
+                    }), []
+                return html.Div(f"⚠ Need at least 100 packets to train (currently have {len(self.packet_buffer)})", style={
+                    'color': '#7c2d12',
+                    'backgroundColor': '#feebc8',
+                    'padding': '10px 15px',
+                    'borderRadius': '6px',
+                    'border': '1px solid #fbd38d',
+                    'fontWeight': '600'
+                }), []
             
-            return "Ready", []
+            return "", []
         
         @self.app.callback(
             [Output('total-packets', 'children'),
@@ -179,16 +417,19 @@ class NetworkDashboard:
         def update_dashboard(n):
             if len(self.packet_buffer) == 0:
                 empty_fig = go.Figure()
-                empty_fig.update_layout(title="No data yet")
-                return '0', '0', '0', '0 KB/s', empty_fig, empty_fig, empty_fig, empty_fig, "No anomalies detected"
+                empty_fig.update_layout(
+                    title="No data yet - Start capturing to see results",
+                    paper_bgcolor='white',
+                    plot_bgcolor='white',
+                    font={'color': '#718096', 'size': 14}
+                )
+                return '0', '0', '0', '0 KB/s', empty_fig, empty_fig, empty_fig, empty_fig, html.P("No anomalies detected yet", style={'color': '#a0aec0', 'textAlign': 'center', 'padding': '40px'})
             
             df = pd.DataFrame(self.packet_buffer)
-            
-            # Process data
             processor = DataProcessor(df)
             df_processed = processor.extract_features()
             
-            # Detect anomalies if model is trained
+            # Detect anomalies
             anomaly_count = 0
             if self.anomaly_detector and self.anomaly_detector.model:
                 try:
@@ -203,74 +444,139 @@ class NetworkDashboard:
                     df_processed['is_anomaly'] = 1
                     df_processed['anomaly_score'] = 0
             
-            # Calculate statistics
+            # Statistics
             total_packets = len(df_processed)
             unique_ips = df_processed['src_ip'].nunique() + df_processed['dst_ip'].nunique()
             
-            # Calculate traffic rate
+            # Traffic rate
             if 'timestamp' in df_processed.columns and len(df_processed) > 1:
                 df_processed['timestamp'] = pd.to_datetime(df_processed['timestamp'])
                 time_span = (df_processed['timestamp'].max() - df_processed['timestamp'].min()).total_seconds()
                 if time_span > 0:
                     bytes_per_sec = df_processed['length'].sum() / time_span
-                    traffic_rate = f"{bytes_per_sec / 1024:.2f} KB/s"
+                    traffic_rate = f"{bytes_per_sec / 1024:.1f}"
                 else:
-                    traffic_rate = "0 KB/s"
+                    traffic_rate = "0"
             else:
-                traffic_rate = "0 KB/s"
+                traffic_rate = "0"
             
-            # Protocol Distribution Pie Chart
+            # Protocol Pie Chart
             protocol_counts = df_processed['protocol_name'].value_counts()
-            pie_fig = px.pie(
+            pie_fig = go.Figure(data=[go.Pie(
+                labels=protocol_counts.index,
                 values=protocol_counts.values,
-                names=protocol_counts.index,
-                title='Protocol Distribution',
-                color_discrete_sequence=px.colors.qualitative.Set3
+                hole=0.4,
+                marker=dict(colors=['#667eea', '#764ba2', '#f093fb', '#f5576c', '#4facfe'])
+            )])
+            pie_fig.update_layout(
+                title={'text': 'Protocol Distribution', 'font': {'size': 18, 'color': '#2d3748', 'family': 'Inter'}},
+                paper_bgcolor='white',
+                plot_bgcolor='white',
+                showlegend=True,
+                height=350,
+                margin=dict(t=50, b=20, l=20, r=20)
             )
             
             # Traffic Timeline
             if 'timestamp' in df_processed.columns:
-                df_timeline = df_processed.groupby(pd.Grouper(key='timestamp', freq='10S')).size().reset_index(name='count')
-                timeline_fig = px.line(
-                    df_timeline,
-                    x='timestamp',
-                    y='count',
-                    title='Traffic Over Time (packets per 10s)',
-                    labels={'count': 'Packet Count', 'timestamp': 'Time'}
+                df_timeline = df_processed.groupby(pd.Grouper(key='timestamp', freq='10s')).size().reset_index(name='count')
+                timeline_fig = go.Figure(data=[go.Scatter(
+                    x=df_timeline['timestamp'],
+                    y=df_timeline['count'],
+                    mode='lines',
+                    fill='tozeroy',
+                    line=dict(color='#4299e1', width=2),
+                    fillcolor='rgba(66, 153, 225, 0.2)'
+                )])
+                timeline_fig.update_layout(
+                    title={'text': 'Traffic Over Time (10s intervals)', 'font': {'size': 18, 'color': '#2d3748', 'family': 'Inter'}},
+                    xaxis_title="Time",
+                    yaxis_title="Packets",
+                    paper_bgcolor='white',
+                    plot_bgcolor='white',
+                    height=350,
+                    margin=dict(t=50, b=50, l=50, r=20),
+                    xaxis=dict(showgrid=True, gridcolor='#e2e8f0'),
+                    yaxis=dict(showgrid=True, gridcolor='#e2e8f0')
                 )
-                timeline_fig.update_traces(line_color='#3498db')
             else:
                 timeline_fig = go.Figure()
-                timeline_fig.update_layout(title="Traffic Over Time")
+                timeline_fig.update_layout(
+                    title="Traffic Over Time",
+                    paper_bgcolor='white',
+                    plot_bgcolor='white'
+                )
             
             # Top Talkers
             top_src = df_processed['src_ip'].value_counts().head(10)
-            talkers_fig = px.bar(
+            talkers_fig = go.Figure(data=[go.Bar(
                 x=top_src.values,
                 y=top_src.index,
                 orientation='h',
-                title='Top 10 Source IPs',
-                labels={'x': 'Packet Count', 'y': 'IP Address'},
-                color=top_src.values,
-                color_continuous_scale='Blues'
+                marker=dict(
+                    color=top_src.values,
+                    colorscale='Viridis',
+                    showscale=False
+                )
+            )])
+            talkers_fig.update_layout(
+                title={'text': 'Top 10 Source IPs', 'font': {'size': 18, 'color': '#2d3748', 'family': 'Inter'}},
+                xaxis_title="Packet Count",
+                yaxis_title="IP Address",
+                paper_bgcolor='white',
+                plot_bgcolor='white',
+                height=350,
+                margin=dict(t=50, b=50, l=150, r=20),
+                xaxis=dict(showgrid=True, gridcolor='#e2e8f0'),
+                yaxis=dict(showgrid=False)
             )
             
-            # Anomaly Scatter Plot
-            if 'is_anomaly' in df_processed.columns and 'anomaly_score' in df_processed.columns:
+            # Anomaly Scatter
+            if 'is_anomaly' in df_processed.columns:
                 scatter_df = df_processed.copy()
                 scatter_df['status'] = scatter_df['is_anomaly'].map({1: 'Normal', -1: 'Anomaly'})
-                scatter_fig = px.scatter(
-                    scatter_df,
-                    x='length',
-                    y='anomaly_score',
-                    color='status',
-                    title='Anomaly Detection Scatter Plot',
-                    labels={'length': 'Packet Size', 'anomaly_score': 'Anomaly Score'},
-                    color_discrete_map={'Normal': '#27ae60', 'Anomaly': '#e74c3c'}
+                scatter_fig = go.Figure()
+                
+                # Normal points
+                normal = scatter_df[scatter_df['status'] == 'Normal']
+                scatter_fig.add_trace(go.Scatter(
+                    x=normal['length'],
+                    y=normal['anomaly_score'],
+                    mode='markers',
+                    name='Normal',
+                    marker=dict(color='#48bb78', size=6, opacity=0.6)
+                ))
+                
+                # Anomaly points
+                anomalies_plot = scatter_df[scatter_df['status'] == 'Anomaly']
+                scatter_fig.add_trace(go.Scatter(
+                    x=anomalies_plot['length'],
+                    y=anomalies_plot['anomaly_score'],
+                    mode='markers',
+                    name='Anomaly',
+                    marker=dict(color='#f56565', size=10, symbol='x')
+                ))
+                
+                scatter_fig.update_layout(
+                    title={'text': 'Anomaly Detection', 'font': {'size': 18, 'color': '#2d3748', 'family': 'Inter'}},
+                    xaxis_title="Packet Size (bytes)",
+                    yaxis_title="Anomaly Score",
+                    paper_bgcolor='white',
+                    plot_bgcolor='white',
+                    height=350,
+                    margin=dict(t=50, b=50, l=50, r=20),
+                    xaxis=dict(showgrid=True, gridcolor='#e2e8f0'),
+                    yaxis=dict(showgrid=True, gridcolor='#e2e8f0'),
+                    showlegend=True
                 )
             else:
                 scatter_fig = go.Figure()
-                scatter_fig.update_layout(title="Anomaly Detection (Model not trained)")
+                scatter_fig.update_layout(
+                    title="Train the model to see anomaly detection",
+                    paper_bgcolor='white',
+                    plot_bgcolor='white',
+                    font={'color': '#718096'}
+                )
             
             # Anomaly Table
             if 'is_anomaly' in df_processed.columns:
@@ -278,34 +584,34 @@ class NetworkDashboard:
                 if len(anomalies) > 0:
                     table = html.Table([
                         html.Thead(html.Tr([
-                            html.Th('Timestamp'),
-                            html.Th('Source IP'),
-                            html.Th('Dest IP'),
-                            html.Th('Protocol'),
-                            html.Th('Size'),
-                            html.Th('Anomaly Score')
+                            html.Th('Timestamp', style={'padding': '12px', 'textAlign': 'left', 'borderBottom': '2px solid #e2e8f0', 'color': '#4a5568', 'fontSize': '13px', 'fontWeight': '600', 'backgroundColor': '#f7fafc'}),
+                            html.Th('Source IP', style={'padding': '12px', 'textAlign': 'left', 'borderBottom': '2px solid #e2e8f0', 'color': '#4a5568', 'fontSize': '13px', 'fontWeight': '600', 'backgroundColor': '#f7fafc'}),
+                            html.Th('Dest IP', style={'padding': '12px', 'textAlign': 'left', 'borderBottom': '2px solid #e2e8f0', 'color': '#4a5568', 'fontSize': '13px', 'fontWeight': '600', 'backgroundColor': '#f7fafc'}),
+                            html.Th('Protocol', style={'padding': '12px', 'textAlign': 'left', 'borderBottom': '2px solid #e2e8f0', 'color': '#4a5568', 'fontSize': '13px', 'fontWeight': '600', 'backgroundColor': '#f7fafc'}),
+                            html.Th('Size', style={'padding': '12px', 'textAlign': 'left', 'borderBottom': '2px solid #e2e8f0', 'color': '#4a5568', 'fontSize': '13px', 'fontWeight': '600', 'backgroundColor': '#f7fafc'}),
+                            html.Th('Anomaly Score', style={'padding': '12px', 'textAlign': 'left', 'borderBottom': '2px solid #e2e8f0', 'color': '#4a5568', 'fontSize': '13px', 'fontWeight': '600', 'backgroundColor': '#f7fafc'})
                         ])),
                         html.Tbody([
                             html.Tr([
-                                html.Td(str(row['timestamp'])[:19] if 'timestamp' in row else 'N/A'),
-                                html.Td(row['src_ip']),
-                                html.Td(row['dst_ip']),
-                                html.Td(row['protocol_name']),
-                                html.Td(f"{row['length']} bytes"),
-                                html.Td(f"{row['anomaly_score']:.4f}")
+                                html.Td(str(row['timestamp'])[:19] if 'timestamp' in row else 'N/A', style={'padding': '12px', 'borderBottom': '1px solid #f7fafc', 'fontSize': '13px', 'color': '#2d3748'}),
+                                html.Td(row['src_ip'], style={'padding': '12px', 'borderBottom': '1px solid #f7fafc', 'fontSize': '13px', 'color': '#2d3748', 'fontFamily': 'monospace'}),
+                                html.Td(row['dst_ip'], style={'padding': '12px', 'borderBottom': '1px solid #f7fafc', 'fontSize': '13px', 'color': '#2d3748', 'fontFamily': 'monospace'}),
+                                html.Td(html.Span(row['protocol_name'], style={'padding': '4px 10px', 'background': '#edf2f7', 'borderRadius': '4px', 'fontSize': '12px', 'fontWeight': '600', 'color': '#4a5568'}), style={'padding': '12px', 'borderBottom': '1px solid #f7fafc'}),
+                                html.Td(f"{row['length']} bytes", style={'padding': '12px', 'borderBottom': '1px solid #f7fafc', 'fontSize': '13px', 'color': '#2d3748'}),
+                                html.Td(html.Span(f"{row['anomaly_score']:.4f}", style={'padding': '4px 10px', 'background': '#fed7d7', 'color': '#c53030', 'borderRadius': '4px', 'fontSize': '12px', 'fontWeight': '700'}), style={'padding': '12px', 'borderBottom': '1px solid #f7fafc'})
                             ]) for idx, row in anomalies.iterrows()
                         ])
-                    ], style={'width': '100%', 'borderCollapse': 'collapse', 'border': '1px solid #ddd'})
+                    ], style={'width': '100%', 'borderCollapse': 'collapse'})
                 else:
-                    table = "No anomalies detected"
+                    table = html.P("No anomalies detected", style={'color': '#a0aec0', 'textAlign': 'center', 'padding': '40px', 'fontSize': '14px'})
             else:
-                table = "Model not trained yet"
+                table = html.P("Train the model to detect anomalies", style={'color': '#a0aec0', 'textAlign': 'center', 'padding': '40px', 'fontSize': '14px'})
             
             return (
-                str(total_packets),
+                f"{total_packets:,}",
                 str(anomaly_count),
                 str(unique_ips),
-                traffic_rate,
+                f"{traffic_rate} KB/s",
                 pie_fig,
                 timeline_fig,
                 talkers_fig,
@@ -329,7 +635,6 @@ class NetworkDashboard:
             if capturer.packets_data:
                 self.packet_buffer.extend(capturer.packets_data)
                 
-                # Keep only last 10000 packets to prevent memory issues
                 if len(self.packet_buffer) > 10000:
                     self.packet_buffer = self.packet_buffer[-10000:]
         
@@ -374,16 +679,14 @@ class NetworkDashboard:
     def run(self, debug=False, port=8050):
         """Run the dashboard"""
         logger.info(f"Starting dashboard on port {port}")
-        self.app.run_server(debug=debug, port=port, host='0.0.0.0')
+        self.app.run(debug=debug, port=port, host='0.0.0.0')
 
-# Run the dashboard
 if __name__ == '__main__':
     from scapy.all import get_if_list
     
     interfaces = get_if_list()
     print("Available interfaces:", interfaces)
     
-    # Use first available interface or specify one
     interface = interfaces[0] if interfaces else 'eth0'
     
     dashboard = NetworkDashboard(interface=interface)
