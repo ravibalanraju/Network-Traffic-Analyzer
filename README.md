@@ -170,10 +170,6 @@ Contributions are welcome! Please:
 - [ ] Support for more protocols
 - [ ] Docker containerization
 
-## License
-
-MIT License - see LICENSE file for details
-
 ## Acknowledgments
 
 - Scapy for packet manipulation
@@ -182,6 +178,14 @@ MIT License - see LICENSE file for details
 
 ## Contact
 
-Your Name - [@yourtwitter](https://twitter.com/yourtwitter)
+Name - Ravibalan R
 
-Project Link: [https://github.com/yourusername/network-traffic-analyzer](https://github.com/yourusername/network-traffic-analyzer)
+Project Link: [https://github.com/ravibalanraju/network-traffic-analyzer](https://github.com/ravibalanraju/network-traffic-analyzer)
+
+
+
+
+
+After Running you may see the page like this
+<img width="1920" height="1200" alt="image" src="https://github.com/user-attachments/assets/47a089a0-96e4-4b56-aba9-a50d7e7b5bc9" />
+
