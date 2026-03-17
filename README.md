@@ -1,0 +1,11 @@
+scapy==2.5.0
+pyshark==0.6
+pandas==2.0.3
+numpy==1.24.3
+scikit-learn==1.3.0
+dash==2.14.0
+plotly==5.17.0
+flask==3.0.0
+pyyaml==6.0.1
+joblib==1.3.2
+python-dotenv==1.0.0
