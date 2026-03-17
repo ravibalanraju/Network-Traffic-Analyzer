@@ -1,0 +1,32 @@
+# Network Traffic Analyzer Configuration
+
+capture:
+  interface: "eth0"  # Network interface to monitor
+  packet_count: 0    # 0 for continuous capture
+  buffer_size: 10000 # Maximum packets to keep in memory
+
+anomaly_detection:
+  model_type: "isolation_forest"  # or "dbscan"
+  contamination: 0.05  # Expected proportion of anomalies (5%)
+  retrain_interval: 3600  # Retrain model every hour (seconds)
+
+alerts:
+  enabled: true
+  cooldown_minutes: 5
+  
+  thresholds:
+    anomaly_score: -0.5
+    port_scan_ports: 20
+    high_traffic_ppm: 1000  # packets per minute
+
+dashboard:
+  port: 8050
+  host: "0.0.0.0"
+  debug: false
+  update_interval: 2  # seconds
+
+logging:
+  level: "INFO"
+  file: "logs/app.log"
+  max_size_mb: 100
+  backup_count: 5
