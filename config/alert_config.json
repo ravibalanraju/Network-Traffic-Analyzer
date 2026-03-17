@@ -1,0 +1,20 @@
+{
+  "email": {
+    "enabled": false,
+    "smtp_server": "smtp.gmail.com",
+    "smtp_port": 587,
+    "sender_email": "your-email@gmail.com",
+    "sender_password": "your-app-password",
+    "recipient_emails": ["recipient@example.com"]
+  },
+  "thresholds": {
+    "anomaly_score": -0.5,
+    "port_scan_threshold": 20,
+    "high_traffic_threshold": 1000
+  },
+  "alert_levels": {
+    "critical": ["port_scan", "ddos_detected"],
+    "warning": ["anomaly_detected", "high_traffic"],
+    "info": ["model_trained", "capture_started"]
+  }
+}
